@@ -1,4 +1,3 @@
-// src/helpers/emailHelper.js
 const transporter = require('../config/emailConfig');
 const generatePDF = require('../utils/pdfGenerator');
 const fs = require('fs');
@@ -12,6 +11,7 @@ const sendEmailWithPDF = (formData, callback) => {
         }
 
         try {
+            // Obtener el último ID del reclamo desde la API
             const response = await axios.get('https://libroreclamaciones-552ad643df8d.herokuapp.com/api/libroReclamaciones/ID');
             const ultimoID = response.data.ultimoID;
             const formattedID = `0000-${ultimoID}`;
@@ -22,12 +22,30 @@ const sendEmailWithPDF = (formData, callback) => {
             console.log("📩 Archivo adjunto:", pdfPath);
 
             const mailOptions = {
-                from: process.env.EMAIL_USER,
+                from: `"Alma Bonita Perú" <${process.env.EMAIL_USER}>`,
                 to: formData.correo,
                 cc: ["20192659@aloe.ulima.edu.pe", "info@soyalmabonita.com", "valeriabasurco@hotmail.com"],
                 subject: `Confirmación de Reclamo N° ${formattedID} - Alma Bonita Perú E.I.R.L.`,
-                text: `Le informamos que hemos recibido su reclamo con el N° ${formattedID}.`,
-                attachments: [{ filename: 'HojaReclamaciones.pdf', path: pdfPath }]
+                text: `Le informamos que hemos recibido su reclamo con el N° ${formattedID}. 
+
+Adjunto encontrará la confirmación de su reclamo con todos los detalles.
+
+Si tiene alguna consulta, por favor contáctenos a través de los siguientes medios:
+
+📞 Teléfono / Whatsapp: +51 989 356 142
+📧 Email: info@soyalmabonita.com
+
+Atentamente,
+Alma Bonita Perú E.I.R.L.
+Área de Atención al Cliente`,
+
+                attachments: [
+                    {
+                        filename: 'HojaReclamaciones.pdf',
+                        path: pdfPath,
+                        contentType: 'application/pdf'
+                    }
+                ]
             };
 
             transporter.sendMail(mailOptions, (error, info) => {
@@ -35,15 +53,23 @@ const sendEmailWithPDF = (formData, callback) => {
                     console.error("❌ Error enviando correo:", error);
                     return callback(error, null);
                 }
-                console.log("✅ Correo enviado:", info);
+
+                console.log("✅ Correo enviado con éxito:", info.response);
+
+                // Eliminar el archivo PDF después del envío para evitar acumulación de archivos en el servidor
+                fs.unlink(pdfPath, (err) => {
+                    if (err) console.error("⚠️ No se pudo eliminar el PDF:", err);
+                    else console.log("🗑️ PDF eliminado del servidor:", pdfPath);
+                });
+
                 callback(null, info);
             });
+
         } catch (error) {
             console.error("❌ Error obteniendo el ID:", error);
             return callback(error, null);
         }
     });
 };
-
 
 module.exports = sendEmailWithPDF;
