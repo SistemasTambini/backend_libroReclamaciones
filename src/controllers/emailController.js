@@ -11,11 +11,19 @@ exports.enviarCorreo = async (req, res) => {
         const ultimoID = response.data.ultimoID;
         const formattedID = `0000-${ultimoID}`;
         formData.reclamoID = formattedID;
-        formData.correo = formData.correo ? formData.correo : ""; // Dejar vacío si no hay correo
 
         // Definir destinatarios y copias
-        const destinatarios = formData.correo ? formData.correo : "info@soyalmabonita.com,valeriabasurco@hotmail.com";
-        const ccEmails = formData.correo ? ["info@soyalmabonita.com", "valeriabasurco@hotmail.com", "20192659@aloe.ulima.edu.pe"] : ["20192659@aloe.ulima.edu.pe"];
+        let destinatarios;
+        let ccEmails = ["info@soyalmabonita.com", "valeriabasurco@hotmail.com", "20192659@aloe.ulima.edu.pe"];
+
+        if (formData.correo && formData.correo.trim() !== "") {
+            // Si el usuario ingresó su correo, él es el destinatario y los demás van en CC
+            destinatarios = formData.correo;
+        } else {
+            // Si no ingresó correo, enviar a los administradores
+            destinatarios = "info@soyalmabonita.com,valeriabasurco@hotmail.com";
+            ccEmails = ["20192659@aloe.ulima.edu.pe"];
+        }
 
         sendEmailWithPDF({
             ...formData,

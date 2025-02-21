@@ -16,21 +16,35 @@ const sendEmailWithPDF = (formData, callback) => {
             const response = await axios.get('https://backend-libroreclamaciones.onrender.com/api/libroReclamaciones/ID');
             const ultimoID = response.data.ultimoID;
             const formattedID = `0000-${ultimoID}`;
-
             formData.reclamoID = formattedID; // Agregar el ID al PDF
-            formData.correo = formData.Correo ? formData.Correo : ""; // Si no hay correo, dejarlo vacío en el PDF
+            formData.correo = formData.correo ? formData.correo : ""; // Si no hay correo, dejarlo vacío en el PDF
+
+            // Definir destinatarios y copias
+            let destinatarios;
+            let ccEmails = ["info@soyalmabonita.com", "valeriabasurco@hotmail.com", "20192659@aloe.ulima.edu.pe"];
+
+            if (formData.correo && formData.correo.trim() !== "") {
+                // Si el usuario ingresó su correo, él es el destinatario y los demás van en CC
+                destinatarios = formData.correo;
+            } else {
+                // Si no ingresó correo, enviar a los administradores
+                destinatarios = "info@soyalmabonita.com,valeriabasurco@hotmail.com";
+                ccEmails = ["20192659@aloe.ulima.edu.pe"];
+            }
 
             const mailOptions = {
                 from: `Alma Bonita Perú <${process.env.EMAIL_USER}>`,
-                to: formData.correo || "info@soyalmabonita.com,valeriabasurco@hotmail.com",
-                cc: formData.correo ? [] : ["20192659@aloe.ulima.edu.pe"],
+                to: destinatarios,
+                cc: ccEmails.join(','),
                 subject: `Confirmación de Reclamo N° ${formattedID} - Alma Bonita Perú E.I.R.L.`,
                 text: `Le informamos que hemos recibido su reclamo con el N° ${formattedID}. \n\nAdjunto encontrará la confirmación de su reclamo con todos los detalles.\n\nSi tiene alguna consulta, por favor contáctenos a través de los siguientes medios:\n\n📞 Teléfono / Whatsapp: +51 989 356 142\n📧 Email: info@soyalmabonita.com\n\nAtentamente,\nAlma Bonita Perú E.I.R.L.\nÁrea de Atención al Cliente`,
-                attachments: [{
-                    filename: 'HojaReclamaciones.pdf',
-                    path: pdfPath,
-                    contentType: 'application/pdf'
-                }]
+                attachments: [
+                    {
+                        filename: 'HojaReclamaciones.pdf',
+                        path: pdfPath,
+                        contentType: 'application/pdf'
+                    }
+                ]
             };
 
             transporter.sendMail(mailOptions, (error, info) => {
@@ -56,6 +70,5 @@ const sendEmailWithPDF = (formData, callback) => {
         }
     });
 };
-
 
 module.exports = sendEmailWithPDF;
