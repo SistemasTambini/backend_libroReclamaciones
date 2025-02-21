@@ -1,8 +1,8 @@
-const pdf = require('html-pdf');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
-const generatePDF = (formData, callback) => {
+const generatePDF = async (formData, callback) => {
     const htmlTemplate = `
     <html><head><style>
       body { font-family: Arial, sans-serif; margin: 20px; }
@@ -37,11 +37,18 @@ const generatePDF = (formData, callback) => {
       </body></html>
     `;
 
-    const pdfPath = path.join(__dirname, '../pdfs/reclamo.pdf');
-    pdf.create(htmlTemplate).toFile(pdfPath, (err, res) => {
-        if (err) return callback(err);
-        callback(null, res.filename);
-    });
+    try {
+        const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        const page = await browser.newPage();
+        await page.setContent(htmlTemplate, { waitUntil: 'domcontentloaded' });
+        const pdfPath = path.join(__dirname, '../pdfs/reclamo.pdf');
+        await page.pdf({ path: pdfPath, format: 'A4' });
+        await browser.close();
+        callback(null, pdfPath);
+    } catch (error) {
+        console.error("❌ Error generando PDF con Puppeteer:", error);
+        callback(error);
+    }
 };
 
 module.exports = generatePDF;
