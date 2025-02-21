@@ -40,7 +40,7 @@ const generatePDF = async (formData, callback) => {
     try {
         const browser = await puppeteer.launch({
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || (await puppeteer.executablePath()),
+            headless: "new",
         });
 
         const page = await browser.newPage();
