@@ -25,7 +25,21 @@ app.use('/api/email', emailRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
+    console.log('Alguien accedió a /');
     res.send('Hola Mundo');
 });
+
+// Rutas con logging
+app.use('/api/libroReclamaciones', (req, res, next) => {
+    console.log('📌 Alguien accedió a /api/libroReclamaciones');
+    next();
+}, libroReclamacionesRoutes);
+
+app.use('/api/email', (req, res, next) => {
+    console.log('📌 Alguien accedió a /api/email');
+    next();
+}, emailRoutes);
+
+
 
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
