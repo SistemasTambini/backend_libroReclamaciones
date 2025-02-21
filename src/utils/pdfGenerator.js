@@ -5,7 +5,7 @@ const path = require('path');
 const generatePDF = async (formData, callback) => {
     try {
         const pdfPath = path.join(__dirname, '../pdfs/reclamo.pdf');
-        const doc = new PDFDocument({ margin: 20 });
+        const doc = new PDFDocument({ margin: 50 });
 
         const stream = fs.createWriteStream(pdfPath);
         doc.pipe(stream);
@@ -19,19 +19,26 @@ const generatePDF = async (formData, callback) => {
         doc.fontSize(16).fillColor('#d9534f').text('Hoja de Reclamaciones', { align: 'center' });
         doc.moveDown();
 
-        // Función para dibujar filas con más espacio cuando sea necesario
-        const drawRow = (y, key, value, extraHeight = 0) => {
-            const keyWidth = 180;
+        // Función para dibujar filas con envoltura de texto automática
+        const drawRow = (y, key, value, options = {}) => {
+            const keyWidth = 140;
             const valueWidth = 350;
-            const rowHeight = 25 + extraHeight; // Ajusta altura según contenido
+            const lineHeight = 18;
 
+            // Calcular cuántas líneas ocupa el texto
+            const textLines = doc.heightOfString(value, { width: valueWidth }) / lineHeight;
+            const rowHeight = Math.max(25, textLines * lineHeight + 5);
+
+            // Dibujar clave (etiqueta en rojo)
             doc.fillColor('#d9534f').fontSize(12).text(key, 50, y, { width: keyWidth, bold: true });
-            doc.fillColor('black').fontSize(12).text(value, 250, y, { width: valueWidth });
 
-            // Línea divisoria
+            // Dibujar valor (contenido en negro, con ajuste automático)
+            doc.fillColor('black').fontSize(12).text(value, 200, y, { width: valueWidth, align: 'left' });
+
+            // Dibujar línea divisoria
             doc.moveTo(50, y + rowHeight).lineTo(550, y + rowHeight).strokeColor('#ddd').stroke();
 
-            return y + rowHeight; // Devuelve la nueva posición Y
+            return y + rowHeight; // Retorna la nueva posición Y
         };
 
         let y = doc.y;
@@ -49,10 +56,10 @@ const generatePDF = async (formData, callback) => {
         y = drawRow(y, 'Producto Adquirido:', formData.producto);
         y = drawRow(y, 'Costo del Producto:', `S/ ${formData.costoProducto}`);
 
-        // Aumentamos el espacio para evitar cruces en textos largos
-        y = drawRow(y, 'Tipo de Reclamo:', formData.tipoReclamo, 10); // Extra espacio
-        y = drawRow(y, 'Detalle del Reclamo:', formData.detalle, 30); // Más espacio
-        y = drawRow(y, 'Pedido del Consumidor:', formData.pedido, 10);
+        // Aumentamos espacio para textos largos
+        y = drawRow(y, 'Tipo de Reclamo:', formData.tipoReclamo, { multiline: true });
+        y = drawRow(y, 'Detalle del Reclamo:', formData.detalle, { multiline: true });
+        y = drawRow(y, 'Pedido del Consumidor:', formData.pedido, { multiline: true });
         y = drawRow(y, 'Observaciones:', formData.observaciones);
 
         // Finalizar documento
