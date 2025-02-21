@@ -1,3 +1,4 @@
+// src/helpers/emailHelper.js
 const transporter = require('../config/emailConfig');
 const generatePDF = require('../utils/pdfGenerator');
 const fs = require('fs');
@@ -12,40 +13,24 @@ const sendEmailWithPDF = (formData, callback) => {
 
         try {
             // Obtener el último ID del reclamo desde la API
-            const response = await axios.get('https://libroreclamaciones-552ad643df8d.herokuapp.com/api/libroReclamaciones/ID');
+            const response = await axios.get('https://backend-libroreclamaciones.onrender.com/api/libroReclamaciones/ID');
             const ultimoID = response.data.ultimoID;
             const formattedID = `0000-${ultimoID}`;
 
-            console.log("📩 Enviando correo a:", formData.correo);
-            console.log("📩 CC:", ["20192659@aloe.ulima.edu.pe", "info@soyalmabonita.com", "valeriabasurco@hotmail.com"]);
-            console.log("📩 Asunto:", `Confirmación de Reclamo N° ${formattedID} - Alma Bonita Perú E.I.R.L.`);
-            console.log("📩 Archivo adjunto:", pdfPath);
+            formData.reclamoID = formattedID; // Agregar el ID al PDF
+            formData.correo = formData.Correo ? formData.Correo : ""; // Si no hay correo, dejarlo vacío en el PDF
 
             const mailOptions = {
-                from: `"Alma Bonita Perú" <${process.env.EMAIL_USER}>`,
-                to: formData.correo,
-                cc: ["20192659@aloe.ulima.edu.pe", "info@soyalmabonita.com", "valeriabasurco@hotmail.com"],
+                from: `Alma Bonita Perú <${process.env.EMAIL_USER}>`,
+                to: formData.correo || "info@soyalmabonita.com,valeriabasurco@hotmail.com",
+                cc: formData.correo ? [] : ["20192659@aloe.ulima.edu.pe"],
                 subject: `Confirmación de Reclamo N° ${formattedID} - Alma Bonita Perú E.I.R.L.`,
-                text: `Le informamos que hemos recibido su reclamo con el N° ${formattedID}. 
-
-Adjunto encontrará la confirmación de su reclamo con todos los detalles.
-
-Si tiene alguna consulta, por favor contáctenos a través de los siguientes medios:
-
-📞 Teléfono / Whatsapp: +51 989 356 142
-📧 Email: info@soyalmabonita.com
-
-Atentamente,
-Alma Bonita Perú E.I.R.L.
-Área de Atención al Cliente`,
-
-                attachments: [
-                    {
-                        filename: 'HojaReclamaciones.pdf',
-                        path: pdfPath,
-                        contentType: 'application/pdf'
-                    }
-                ]
+                text: `Le informamos que hemos recibido su reclamo con el N° ${formattedID}. \n\nAdjunto encontrará la confirmación de su reclamo con todos los detalles.\n\nSi tiene alguna consulta, por favor contáctenos a través de los siguientes medios:\n\n📞 Teléfono / Whatsapp: +51 989 356 142\n📧 Email: info@soyalmabonita.com\n\nAtentamente,\nAlma Bonita Perú E.I.R.L.\nÁrea de Atención al Cliente`,
+                attachments: [{
+                    filename: 'HojaReclamaciones.pdf',
+                    path: pdfPath,
+                    contentType: 'application/pdf'
+                }]
             };
 
             transporter.sendMail(mailOptions, (error, info) => {
@@ -56,7 +41,7 @@ Alma Bonita Perú E.I.R.L.
 
                 console.log("✅ Correo enviado con éxito:", info.response);
 
-                // Eliminar el archivo PDF después del envío para evitar acumulación de archivos en el servidor
+                // Eliminar el archivo PDF después del envío para evitar acumulación de archivos
                 fs.unlink(pdfPath, (err) => {
                     if (err) console.error("⚠️ No se pudo eliminar el PDF:", err);
                     else console.log("🗑️ PDF eliminado del servidor:", pdfPath);
@@ -71,5 +56,6 @@ Alma Bonita Perú E.I.R.L.
         }
     });
 };
+
 
 module.exports = sendEmailWithPDF;
