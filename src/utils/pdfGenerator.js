@@ -2,6 +2,19 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
+const formatDate = (isoDate) => {
+    const date = new Date(isoDate);
+    return date.toLocaleString('es-PE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'America/Lima' // Ajustar a la zona horaria de Perú
+    });
+};
+
 const generatePDF = async (formData, callback) => {
     try {
         const pdfPath = path.join(__dirname, '../pdfs/reclamo.pdf');
@@ -19,31 +32,26 @@ const generatePDF = async (formData, callback) => {
         doc.fontSize(16).fillColor('#d9534f').text('Hoja de Reclamaciones', { align: 'center' });
         doc.moveDown();
 
-        // Función para dibujar filas con envoltura de texto automática
+        // Función para dibujar filas con ajuste de texto
         const drawRow = (y, key, value, options = {}) => {
             const keyWidth = 140;
             const valueWidth = 350;
             const lineHeight = 18;
 
-            // Calcular cuántas líneas ocupa el texto
             const textLines = doc.heightOfString(value, { width: valueWidth }) / lineHeight;
             const rowHeight = Math.max(25, textLines * lineHeight + 5);
 
-            // Dibujar clave (etiqueta en rojo)
             doc.fillColor('#d9534f').fontSize(12).text(key, 50, y, { width: keyWidth, bold: true });
-
-            // Dibujar valor (contenido en negro, con ajuste automático)
             doc.fillColor('black').fontSize(12).text(value, 200, y, { width: valueWidth, align: 'left' });
 
-            // Dibujar línea divisoria
             doc.moveTo(50, y + rowHeight).lineTo(550, y + rowHeight).strokeColor('#ddd').stroke();
 
-            return y + rowHeight; // Retorna la nueva posición Y
+            return y + rowHeight;
         };
 
         let y = doc.y;
         y = drawRow(y, 'N° de Reclamo:', formData.reclamoID);
-        y = drawRow(y, 'Fecha de Registro:', formData.fechaRegistro);
+        y = drawRow(y, 'Fecha y hora de Registro:', formatDate(formData.fechaRegistro)); // 🔥 Formatear fecha
         y = drawRow(y, 'Nombre:', formData.nombre);
         y = drawRow(y, 'DNI / RUC:', formData.dni);
         y = drawRow(y, 'Teléfono:', formData.telefono);
@@ -56,7 +64,6 @@ const generatePDF = async (formData, callback) => {
         y = drawRow(y, 'Producto Adquirido:', formData.producto);
         y = drawRow(y, 'Costo del Producto:', `S/ ${formData.costoProducto}`);
 
-        // Aumentamos espacio para textos largos
         y = drawRow(y, 'Tipo de Reclamo:', formData.tipoReclamo, { multiline: true });
         y = drawRow(y, 'Detalle del Reclamo:', formData.detalle, { multiline: true });
         y = drawRow(y, 'Pedido del Consumidor:', formData.pedido, { multiline: true });
