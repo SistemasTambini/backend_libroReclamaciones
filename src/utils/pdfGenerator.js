@@ -5,44 +5,51 @@ const path = require('path');
 const generatePDF = async (formData, callback) => {
     try {
         const pdfPath = path.join(__dirname, '../pdfs/reclamo.pdf');
-        const doc = new PDFDocument();
+        const doc = new PDFDocument({ margin: 20 });
 
-        // Crear el flujo de escritura de archivo
+        // Crear el flujo de escritura
         const stream = fs.createWriteStream(pdfPath);
         doc.pipe(stream);
 
-        // Añadir contenido al PDF
-        doc.fontSize(18).text('ALMA BONITA PERU E.I.R.L.', { align: 'center' });
-        doc.fontSize(12).text('RUC: 20600577990', { align: 'center' });
-        doc.fontSize(12).text('Dirección: Los Olivos 381- San Isidro', { align: 'center' });
+        // Encabezado
+        doc.fontSize(18).fillColor('#d9534f').text('ALMA BONITA PERU E.I.R.L.', { align: 'center' });
+        doc.fontSize(12).fillColor('black').text('RUC: 20600577990', { align: 'center' });
+        doc.text('Dirección: Los Olivos 381- San Isidro', { align: 'center' });
         doc.moveDown();
 
-        doc.fontSize(14).text('Hoja de Reclamaciones', { align: 'center' });
+        // Título
+        doc.fontSize(16).fillColor('#d9534f').text('Hoja de Reclamaciones', { align: 'center' });
         doc.moveDown();
 
-        // Agregar los datos del formulario
-        doc.fontSize(12).text(`Fecha de Registro: ${formData.fechaRegistro}`);
-        doc.text(`Nombre: ${formData.nombre}`);
-        doc.text(`DNI / RUC: ${formData.dni}`);
-        doc.text(`Teléfono: ${formData.telefono}`);
-        doc.text(`Correo Electrónico: ${formData.correo}`);
-        doc.text(`Domicilio: ${formData.domicilio}`);
-        doc.text(`Distrito: ${formData.distrito}`);
-        doc.text(`Departamento: ${formData.departamento}`);
-        doc.text(`Provincia: ${formData.provincia}`);
-        doc.text(`Canal de Compra: ${formData.canalCompra}`);
-        doc.text(`Producto Adquirido: ${formData.producto}`);
-        doc.text(`Costo del Producto: S/ ${formData.costoProducto}`);
-        doc.text(`Tipo de Reclamo: ${formData.tipoReclamo}`);
-        doc.text(`Detalle del Reclamo: ${formData.detalle}`);
-        doc.text(`Pedido del Consumidor: ${formData.pedido}`);
-        doc.text(`Observaciones: ${formData.observaciones}`);
-        doc.moveDown();
+        // Crear tabla simulada
+        const drawRow = (y, key, value) => {
+            doc.fillColor('#d9534f').fontSize(12).text(key, 50, y, { width: 200, bold: true });
+            doc.fillColor('black').fontSize(12).text(value, 250, y, { width: 300 });
+            doc.moveTo(50, y + 20).lineTo(550, y + 20).strokeColor('#ddd').stroke();
+        };
 
-        // Finalizar el documento
+        let y = doc.y;
+        drawRow(y, 'Fecha de Registro:', formData.fechaRegistro);
+        drawRow(y += 25, 'Nombre:', formData.nombre);
+        drawRow(y += 25, 'DNI / RUC:', formData.dni);
+        drawRow(y += 25, 'Teléfono:', formData.telefono);
+        drawRow(y += 25, 'Correo Electrónico:', formData.correo);
+        drawRow(y += 25, 'Domicilio:', formData.domicilio);
+        drawRow(y += 25, 'Distrito:', formData.distrito);
+        drawRow(y += 25, 'Departamento:', formData.departamento);
+        drawRow(y += 25, 'Provincia:', formData.provincia);
+        drawRow(y += 25, 'Canal de Compra:', formData.canalCompra);
+        drawRow(y += 25, 'Producto Adquirido:', formData.producto);
+        drawRow(y += 25, 'Costo del Producto:', `S/ ${formData.costoProducto}`);
+        drawRow(y += 25, 'Tipo de Reclamo:', formData.tipoReclamo);
+        drawRow(y += 25, 'Detalle del Reclamo:', formData.detalle);
+        drawRow(y += 25, 'Pedido del Consumidor:', formData.pedido);
+        drawRow(y += 25, 'Observaciones:', formData.observaciones);
+
+        // Finalizar documento
         doc.end();
 
-        // Esperar a que el PDF se guarde antes de llamar al callback
+        // Esperar a que el archivo PDF se cree antes de devolver el path
         stream.on('finish', () => {
             callback(null, pdfPath);
         });
