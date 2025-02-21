@@ -56,7 +56,7 @@ const generatePDF = async (formData, callback) => {
         y = drawRow(y, 'DNI / RUC:', formData.dni);
         y = drawRow(y, 'Teléfono:', formData.telefono);
         y = drawRow(y, 'Correo Electrónico:', formData.correo || "");
-        y = drawRow(y, 'Domicilio:', formData.domicilio);
+        y = drawRow(y, 'Dirección completa:', formData.domicilio);
         y = drawRow(y, 'Distrito:', formData.distrito);
         y = drawRow(y, 'Departamento:', formData.departamento);
         y = drawRow(y, 'Provincia:', formData.provincia);
