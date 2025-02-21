@@ -38,11 +38,17 @@ const generatePDF = async (formData, callback) => {
     `;
 
     try {
-        const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || (await puppeteer.executablePath()),
+        });
+
         const page = await browser.newPage();
         await page.setContent(htmlTemplate, { waitUntil: 'domcontentloaded' });
+
         const pdfPath = path.join(__dirname, '../pdfs/reclamo.pdf');
         await page.pdf({ path: pdfPath, format: 'A4' });
+
         await browser.close();
         callback(null, pdfPath);
     } catch (error) {
