@@ -24,4 +24,3 @@ exports.obtenerUltimoID = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener el último ID', error });
     }
 };
-
