@@ -39,8 +39,8 @@ const generatePDF = async (formData, callback) => {
 
     try {
         const browser = await puppeteer.launch({
+            headless: 'new',
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            headless: "new",
         });
 
         const page = await browser.newPage();
