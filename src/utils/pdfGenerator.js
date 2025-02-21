@@ -1,4 +1,3 @@
-// src/utils/pdfGenerator.js
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
@@ -11,6 +10,7 @@ const generatePDF = async (formData, callback) => {
         const stream = fs.createWriteStream(pdfPath);
         doc.pipe(stream);
 
+        // Encabezado
         doc.fontSize(18).fillColor('#d9534f').text('ALMA BONITA PERU E.I.R.L.', { align: 'center' });
         doc.fontSize(12).fillColor('black').text('RUC: 20600577990', { align: 'center' });
         doc.text('Dirección: Los Olivos 381- San Isidro', { align: 'center' });
@@ -19,31 +19,43 @@ const generatePDF = async (formData, callback) => {
         doc.fontSize(16).fillColor('#d9534f').text('Hoja de Reclamaciones', { align: 'center' });
         doc.moveDown();
 
-        const drawRow = (y, key, value) => {
-            doc.fillColor('#d9534f').fontSize(12).text(key, 50, y, { width: 200, bold: true });
-            doc.fillColor('black').fontSize(12).text(value, 250, y, { width: 300 });
-            doc.moveTo(50, y + 20).lineTo(550, y + 20).strokeColor('#ddd').stroke();
+        // Función para dibujar filas con más espacio cuando sea necesario
+        const drawRow = (y, key, value, extraHeight = 0) => {
+            const keyWidth = 180;
+            const valueWidth = 350;
+            const rowHeight = 25 + extraHeight; // Ajusta altura según contenido
+
+            doc.fillColor('#d9534f').fontSize(12).text(key, 50, y, { width: keyWidth, bold: true });
+            doc.fillColor('black').fontSize(12).text(value, 250, y, { width: valueWidth });
+
+            // Línea divisoria
+            doc.moveTo(50, y + rowHeight).lineTo(550, y + rowHeight).strokeColor('#ddd').stroke();
+
+            return y + rowHeight; // Devuelve la nueva posición Y
         };
 
         let y = doc.y;
-        drawRow(y, 'N° de Reclamo:', formData.reclamoID);
-        drawRow(y += 25, 'Fecha de Registro:', formData.fechaRegistro);
-        drawRow(y += 25, 'Nombre:', formData.nombre);
-        drawRow(y += 25, 'DNI / RUC:', formData.dni);
-        drawRow(y += 25, 'Teléfono:', formData.telefono);
-        drawRow(y += 25, 'Correo Electrónico:', formData.correo || "");
-        drawRow(y += 25, 'Domicilio:', formData.domicilio);
-        drawRow(y += 25, 'Distrito:', formData.distrito);
-        drawRow(y += 25, 'Departamento:', formData.departamento);
-        drawRow(y += 25, 'Provincia:', formData.provincia);
-        drawRow(y += 25, 'Canal de Compra:', formData.canalCompra);
-        drawRow(y += 25, 'Producto Adquirido:', formData.producto);
-        drawRow(y += 25, 'Costo del Producto:', `S/ ${formData.costoProducto}`);
-        drawRow(y += 25, 'Tipo de Reclamo:', formData.tipoReclamo);
-        drawRow(y += 25, 'Detalle del Reclamo:', formData.detalle);
-        drawRow(y += 25, 'Pedido del Consumidor:', formData.pedido);
-        drawRow(y += 25, 'Observaciones:', formData.observaciones);
+        y = drawRow(y, 'N° de Reclamo:', formData.reclamoID);
+        y = drawRow(y, 'Fecha de Registro:', formData.fechaRegistro);
+        y = drawRow(y, 'Nombre:', formData.nombre);
+        y = drawRow(y, 'DNI / RUC:', formData.dni);
+        y = drawRow(y, 'Teléfono:', formData.telefono);
+        y = drawRow(y, 'Correo Electrónico:', formData.correo || "");
+        y = drawRow(y, 'Domicilio:', formData.domicilio);
+        y = drawRow(y, 'Distrito:', formData.distrito);
+        y = drawRow(y, 'Departamento:', formData.departamento);
+        y = drawRow(y, 'Provincia:', formData.provincia);
+        y = drawRow(y, 'Canal de Compra:', formData.canalCompra);
+        y = drawRow(y, 'Producto Adquirido:', formData.producto);
+        y = drawRow(y, 'Costo del Producto:', `S/ ${formData.costoProducto}`);
 
+        // Aumentamos el espacio para evitar cruces en textos largos
+        y = drawRow(y, 'Tipo de Reclamo:', formData.tipoReclamo, 10); // Extra espacio
+        y = drawRow(y, 'Detalle del Reclamo:', formData.detalle, 30); // Más espacio
+        y = drawRow(y, 'Pedido del Consumidor:', formData.pedido, 10);
+        y = drawRow(y, 'Observaciones:', formData.observaciones);
+
+        // Finalizar documento
         doc.end();
         stream.on('finish', () => callback(null, pdfPath));
         stream.on('error', (err) => callback(err, null));
