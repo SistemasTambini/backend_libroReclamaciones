@@ -26,7 +26,8 @@ const generatePDF = async (formData, callback) => {
         // Encabezado
         doc.fontSize(18).fillColor('#d9534f').text('ALMA BONITA PERU E.I.R.L.', { align: 'center' });
         doc.fontSize(12).fillColor('black').text('RUC: 20600577990', { align: 'center' });
-        doc.text('Dirección: Los Olivos 381- San Isidro', { align: 'center' });
+        doc.text('Dirección: Calle Los Olivos N° 381 Urb Orrantia - San Isidro', { align: 'center' });
+        doc.text("*Le recordamos que el proveedor (ALMA BONITA) le deberá dar respuesta a su Reclamo o Queja en un plazo no mayor de quince (15) días hábiles.",{ align: "center" })
         doc.moveDown();
 
         doc.fontSize(16).fillColor('#d9534f').text('Hoja de Reclamaciones', { align: 'center' });
